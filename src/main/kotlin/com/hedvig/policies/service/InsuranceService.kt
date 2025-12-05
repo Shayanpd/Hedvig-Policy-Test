@@ -34,6 +34,7 @@ class InsuranceService(
 
     fun getInsuranceById(id: Long): Insurance? = insuranceRepository.findById(id).orElse(null)
 
+    @Transactional
     fun deleteInsurance(id: Long) {
         val insurance = insuranceRepository.findById(id)
             .orElseThrow { RuntimeException("Insurance not found with id $id") }
