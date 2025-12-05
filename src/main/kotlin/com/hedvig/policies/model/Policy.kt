@@ -20,5 +20,5 @@ data class Policy(
     val startDate: LocalDate,
     var endDate: LocalDate? = null,
 
-    val premium: Int
+    val premium: Double
 )

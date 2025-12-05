@@ -1,6 +1,7 @@
 package com.hedvig.policies.service
 
-import com.hedvig.policies.dto.CreatePolicyRequest
+import com.hedvig.policies.dto.CreateInsuranceRequest
+import com.hedvig.policies.dto.UpdatePolicyRequest
 import com.hedvig.policies.model.Insurance
 import com.hedvig.policies.model.Policy
 import com.hedvig.policies.repository.InsuranceRepository
@@ -15,7 +16,7 @@ class InsuranceService(
 ) {
 
     @Transactional
-    fun createInsurance(req: CreatePolicyRequest): Insurance {
+    fun createInsurance(req: CreateInsuranceRequest): Insurance {
         val insurance = Insurance(personalNumber = req.personalNumber)
         val premium = premiumCalculator.calculateMonthly(req.postalCode)
         val policy = Policy(
@@ -40,7 +41,7 @@ class InsuranceService(
     }
 
     @Transactional
-    fun addPolicy(insuranceId: Long, req: CreatePolicyRequest): Policy {
+    fun addPolicy(insuranceId: Long, req: UpdatePolicyRequest): Policy {
         val insurance = insuranceRepository.findById(insuranceId)
             .orElseThrow { RuntimeException("Insurance not found") }
 
