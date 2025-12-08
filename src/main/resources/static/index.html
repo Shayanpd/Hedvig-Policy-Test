@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Insurance Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+<!-- Header -->
+<header class="bg-white shadow-sm py-6 mb-10">
+  <div class="max-w-5xl mx-auto px-6">
+    <h1 class="text-4xl font-bold text-gray-800">Insurance Dashboard</h1>
+    <p class="text-gray-500 mt-1">Manage insurances, policies, and lookups</p>
+  </div>
+</header>
+
+<!-- Notification -->
+<div id="notification" class="hidden fixed top-6 right-6 p-4 rounded shadow text-white z-50"></div>
+
+<!-- Main Container -->
+<div class="max-w-5xl mx-auto px-6">
+
+  <!-- Form Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+    <!-- Card -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">Add Insurance</h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-gray-600 mb-1">Personal Number</label>
+          <input id="personalNumber" type="text" class="input-field" placeholder="YYYYMMDD-XXXX">
+        </div>
+
+        <div>
+          <label class="block text-gray-600 mb-1">Address</label>
+          <input id="address" type="text" class="input-field">
+        </div>
+
+        <div>
+          <label class="block text-gray-600 mb-1">Postal Code</label>
+          <input id="postalCode" type="text" class="input-field">
+        </div>
+
+        <div>
+          <label class="block text-gray-600 mb-1">Start Date</label>
+          <input id="startDate" type="date" class="input-field">
+        </div>
+
+        <button onclick="addInsurance()" class="btn-primary w-full mt-2">
+          Add Insurance
+        </button>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">Add / Change Policy</h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-gray-600 mb-1">Insurance ID</label>
+          <input id="insuranceId" type="number" class="input-field" placeholder="ID">
+        </div>
+
+        <div>
+          <label class="block text-gray-600 mb-1">New Address</label>
+          <input id="newAddress" type="text" class="input-field">
+        </div>
+
+        <div>
+          <label class="block text-gray-600 mb-1">New Postal Code</label>
+          <input id="newPostalCode" type="text" class="input-field">
+        </div>
+
+        <div>
+          <label class="block text-gray-600 mb-1">New Start Date</label>
+          <input id="newStartDate" type="date" class="input-field">
+        </div>
+
+        <button onclick="changePolicy()" class="btn-yellow w-full mt-2">
+          Add Policy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Lookup Card -->
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-10">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">Check Policy on Date</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      <div>
+        <label class="block text-gray-600 mb-1">Insurance ID</label>
+        <input id="policyInsuranceId" type="number" class="input-field">
+      </div>
+
+      <div>
+        <label class="block text-gray-600 mb-1">Date</label>
+        <input id="policyDate" type="date" class="input-field">
+      </div>
+
+      <button onclick="getPolicyOnDate()" class="btn-indigo h-11">
+        Check Policy
+      </button>
+    </div>
+
+    <div id="policyResult" class="mt-6 p-4 bg-gray-50 border rounded-xl"></div>
+  </div>
+
+  <!-- Search -->
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mt-10 flex flex-col md:flex-row items-center gap-4">
+    <input id="searchPersonalNumber" type="text" placeholder="Search personal number" class="input-field flex-1">
+
+    <button onclick="getInsurances()" class="btn-green w-full md:w-auto">
+      Search
+    </button>
+
+    <button onclick="getAllInsurances()" class="btn-purple w-full md:w-auto">
+      Show All
+    </button>
+  </div>
+
+  <!-- Results -->
+  <h2 class="text-2xl font-semibold text-gray-700 mt-10 mb-4">Insurance Records</h2>
+  <div id="results" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+
+</div>
+
+<style>
+  .input-field {
+    @apply border rounded-lg p-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none;
+  }
+  .btn-primary {
+    @apply bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition;
+  }
+  .btn-yellow {
+    @apply bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 transition;
+  }
+  .btn-indigo {
+    @apply bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-600 transition;
+  }
+  .btn-green {
+    @apply bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition;
+  }
+  .btn-purple {
+    @apply bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition;
+  }
+</style>
+
+<script>
+  /* ---- JS FUNCTIONS (same logic as before, only cleaner notifications) ---- */
+
+  function notify(message, color = 'bg-green-600') {
+    const n = document.getElementById("notification");
+    n.textContent = message;
+    n.className = `${color} fixed top-6 right-6 p-4 rounded-xl shadow text-white`;
+    setTimeout(() => n.className += " hidden", 3000);
+  }
+
+  async function addInsurance() {
+    try {
+      const body = {
+        personalNumber: personalNumber.value,
+        address: address.value,
+        postalCode: postalCode.value,
+        startDate: startDate.value
+      };
+
+      const res = await axios.post('/api/insurances', body);
+      notify(`Insurance added (ID ${res.data.id})`);
+      getAllInsurances();
+    } catch (e) { notify("Error", "bg-red-600"); }
+  }
+
+  async function changePolicy() {
+    try {
+      const id = insuranceId.value;
+      const card = [...results.children].find(d => d.dataset.insuranceId == id);
+      if (!card) return notify("Insurance not found", "bg-red-600");
+
+      const body = {
+        personalNumber: card.dataset.personalNumber,
+        address: newAddress.value,
+        postalCode: newPostalCode.value,
+        startDate: newStartDate.value
+      };
+
+      await axios.post(`/api/insurances/${id}/policies`, body);
+      notify(`Policy added`);
+      getAllInsurances();
+    } catch (e) { notify("Error", "bg-red-600"); }
+  }
+
+  async function getPolicyOnDate() {
+    try {
+      const id = policyInsuranceId.value;
+      const date = policyDate.value;
+      const res = await axios.get(`/api/insurances/${id}/policy?date=${date}`);
+
+      if (!res.data) {
+        policyResult.innerHTML = `<p class="text-red-500">No policy found.</p>`;
+        return;
+      }
+
+      const p = res.data;
+      policyResult.innerHTML = `
+      <table class="w-full text-sm border border-gray-300 bg-white rounded-lg overflow-hidden">
+        <tr class="bg-gray-100">
+          <th class="p-2 border">ID</th>
+          <td class="p-2 border">${p.id}</td>
+        </tr>
+        <tr>
+          <th class="p-2 border">Address</th>
+          <td class="p-2 border">${p.address}</td>
+        </tr>
+        <tr>
+          <th class="p-2 border">Postal</th>
+          <td class="p-2 border">${p.postalCode}</td>
+        </tr>
+        <tr>
+          <th class="p-2 border">Start</th>
+          <td class="p-2 border">${p.startDate}</td>
+        </tr>
+        <tr>
+          <th class="p-2 border">End</th>
+          <td class="p-2 border">${p.endDate || '-'}</td>
+        </tr>
+        <tr>
+          <th class="p-2 border">Premium</th>
+          <td class="p-2 border">${p.premium}</td>
+        </tr>
+      </table>`;
+    } catch (e) { notify("Error retrieving policy", "bg-red-600"); }
+  }
+
+  async function getInsurances() {
+    const pn = searchPersonalNumber.value;
+    if (!pn) return notify("Enter personal number", "bg-red-600");
+    displayInsurances(`/api/insurances?personalNumber=${pn}`);
+  }
+
+  async function getAllInsurances() {
+    displayInsurances('/api/insurances/all');
+  }
+
+  async function displayInsurances(url) {
+    const res = await axios.get(url);
+    results.innerHTML = '';
+
+    res.data.forEach(ins => {
+      const card = document.createElement('div');
+      card.className = "bg-white p-5 rounded-2xl shadow border border-gray-200 hover:shadow-md transition";
+      card.dataset.insuranceId = ins.id;
+      card.dataset.personalNumber = ins.personalNumber;
+
+      card.innerHTML = `
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="font-semibold text-lg">Insurance #${ins.id}</h3>
+        <button onclick="deleteInsurance(${ins.id}); event.stopPropagation();" class="bg-red-500 text-white rounded-lg px-3 py-1 hover:bg-red-600">
+          Delete
+        </button>
+      </div>
+
+      <p class="text-gray-600"><strong>Personal Number:</strong> ${ins.personalNumber}</p>
+
+      <h4 class="mt-4 font-medium">Policies</h4>
+      ${ins.policies.length === 0
+              ? `<p class="text-gray-500 text-sm mt-1">No policies</p>`
+              : `
+        <table class="mt-2 text-sm w-full border border-gray-300 bg-gray-50 rounded-lg overflow-hidden">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="p-1 border">ID</th>
+              <th class="p-1 border">Address</th>
+              <th class="p-1 border">Postal</th>
+              <th class="p-1 border">Start</th>
+              <th class="p-1 border">End</th>
+              <th class="p-1 border">Premium</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ins.policies.map(p => `
+              <tr>
+                <td class="p-1 border">${p.id}</td>
+                <td class="p-1 border">${p.address}</td>
+                <td class="p-1 border">${p.postalCode}</td>
+                <td class="p-1 border">${p.startDate}</td>
+                <td class="p-1 border">${p.endDate || '-'}</td>
+                <td class="p-1 border">${p.premium}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      `}
+    `;
+
+      card.onclick = () => insuranceId.value = ins.id;
+      results.appendChild(card);
+    });
+  }
+
+  async function deleteInsurance(id) {
+    if (!confirm("Delete insurance?")) return;
+    await axios.delete(`/api/insurances/${id}`);
+    notify("Insurance deleted");
+    getAllInsurances();
+  }
+
+  getAllInsurances();
+</script>
+
+</body>
+</html>
